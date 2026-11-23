@@ -43,7 +43,7 @@
     display: none !important;
   }
 
-  /* 50/50 Split-Screen Stage */
+  /* 50/50 Split-Screen Stage (Desktop) */
   #stage {
     display: flex;
     flex-direction: row;
@@ -56,7 +56,6 @@
     z-index: 10;
   }
 
-  /* Left Half: Flower Container */
   #left-half {
     flex: 1;
     display: flex;
@@ -65,7 +64,6 @@
     height: 100%;
   }
 
-  /* Right Half: Letter Box Container */
   #right-half {
     flex: 1;
     display: flex;
@@ -74,7 +72,6 @@
     height: 100%;
   }
 
-  /* ASCII Lily scaled cleanly for the left half */
   #ascii-lily {
     font-size: min(1.45vh, 0.85vw);
     line-height: 1.05;
@@ -93,14 +90,11 @@
   .petal-sub  { color: #ffb3c1; text-shadow: 0 0 5px rgba(255, 179, 193, 0.3); }
   .petal-tip  { color: #fff0f3; }
 
-  /* Letter Box on the Right Half */
+  /* Letter Box */
   #letter-box {
     position: relative;
     width: 100%;
     max-width: 500px;
-    height: auto;
-    max-height: 80vh;
-    overflow-y: auto;
     background: rgba(12, 12, 16, 0.88);
     border: 1px solid #ff6b9d;
     box-shadow: 0 0 18px rgba(255, 107, 157, 0.15), inset 0 0 12px rgba(255, 107, 157, 0.05);
@@ -150,7 +144,6 @@
     font-weight: bold;
   }
 
-  /* Anchor for the ASCII hearts beside the first :^) */
   #heart-anchor {
     position: relative;
     display: inline-block;
@@ -180,12 +173,23 @@
     }
   }
 
-  /* Stack vertically on narrow mobile screens */
+  /* MOBILE FIX: Enable smooth page scrolling & full unclipped letter box */
   @media (max-width: 768px) {
+    body {
+      overflow-y: auto;
+      overflow-x: hidden;
+      align-items: flex-start;
+      padding: 20px 16px 40px 16px;
+    }
+    /* Keep the Start button centered before clicking */
+    body.pre-start {
+      align-items: center;
+      overflow: hidden;
+    }
     #stage {
       flex-direction: column;
-      height: 94vh;
-      gap: 12px;
+      height: auto;
+      gap: 20px;
     }
     #left-half, #right-half {
       flex: none;
@@ -193,16 +197,16 @@
       height: auto;
     }
     #ascii-lily {
-      font-size: min(0.85vh, 1.5vw);
+      font-size: 1.55vw;
     }
     #letter-box {
-      padding: 16px 18px;
-      font-size: 0.78rem;
-      line-height: 1.45;
-      max-height: 46vh;
+      padding: 18px 20px;
+      font-size: 0.85rem;
+      line-height: 1.55;
+      transform: translateY(15px);
     }
-    #letter-box p {
-      margin-bottom: 10px;
+    #letter-box.visible {
+      transform: translateY(0);
     }
   }
 
@@ -262,7 +266,7 @@
   }
 </style>
 </head>
-<body>
+<body class="pre-start">
 
   <button id="start-btn">haz click aqui ;^)</button>
 
@@ -294,7 +298,6 @@
     const wordMuy = document.getElementById('word-muy');
     const wordTan = document.getElementById('word-tan');
 
-    // Permanent hover/tap expansion for "muy" and "tan"
     function setupStretchWord(element, fullText) {
       let stretched = false;
       const expand = () => {
@@ -302,7 +305,6 @@
         stretched = true;
         element.classList.add('expanded');
         
-        // Animate letter-by-letter expansion smoothly
         let current = element.textContent;
         let idx = current.length;
         const interval = setInterval(() => {
@@ -316,20 +318,18 @@
       };
 
       element.addEventListener('mouseenter', expand);
-      element.addEventListener('click', expand); // Also works on mobile tap
+      element.addEventListener('click', expand);
     }
 
     setupStretchWord(wordMuy, 'muuuuuuuuuy');
     setupStretchWord(wordTan, 'taaaaaaannnn');
 
-    // Little ASCII hearts beside the first ":^)"
     function spawnMiniHeart() {
       const heart = document.createElement('span');
       heart.classList.add('mini-heart');
       const symbols = ['<3', '♥', '♡'];
       heart.textContent = symbols[Math.floor(Math.random() * symbols.length)];
 
-      // Start right beside the :^)
       const startX = 24 + (Math.random() * 14 - 4);
       const startY = (Math.random() * 8 - 4);
       heart.style.left = startX + 'px';
@@ -436,7 +436,6 @@
       return html;
     }
 
-    // Subtle background twinkling stars
     function createStarfield() {
       const starChars = ['.', '+', '·'];
       for (let i = 0; i < 35; i++) {
@@ -451,7 +450,6 @@
     }
     createStarfield();
 
-    // Fast Shooting Stars across the ENTIRE viewport
     function spawnShootingStar() {
       const star = document.createElement('div');
       star.classList.add('shooting-star');
@@ -483,6 +481,7 @@
     }, 3500);
 
     startBtn.addEventListener('click', () => {
+      document.body.classList.remove('pre-start');
       startBtn.classList.add('hidden');
       stage.classList.remove('hidden');
 
@@ -499,7 +498,6 @@
         } else {
           clearInterval(growInterval);
           letterBox.classList.add('visible');
-          // Start spawning the little ASCII hearts beside the first :^) once the letter appears
           setInterval(spawnMiniHeart, 750);
         }
       }, 42);
