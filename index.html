@@ -173,37 +173,43 @@
     }
   }
 
-  /* MOBILE FIX: Enable smooth page scrolling & full unclipped letter box */
+  /* MOBILE FIX: Compact height + guaranteed scrolling & bottom clearance */
   @media (max-width: 768px) {
-    body {
-      overflow-y: auto;
-      overflow-x: hidden;
-      align-items: flex-start;
-      padding: 20px 16px 40px 16px;
+    html, body {
+      height: auto !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
     }
-    /* Keep the Start button centered before clicking */
+    body {
+      align-items: flex-start;
+      padding: 14px 14px 90px 14px;
+    }
     body.pre-start {
+      height: 100vh !important;
       align-items: center;
-      overflow: hidden;
+      overflow: hidden !important;
     }
     #stage {
       flex-direction: column;
-      height: auto;
-      gap: 20px;
+      height: auto !important;
+      gap: 12px;
     }
     #left-half, #right-half {
       flex: none;
       width: 100%;
-      height: auto;
+      height: auto !important;
     }
     #ascii-lily {
-      font-size: 1.55vw;
+      font-size: 1.32vw;
     }
     #letter-box {
-      padding: 18px 20px;
-      font-size: 0.85rem;
-      line-height: 1.55;
+      padding: 15px 16px;
+      font-size: 0.8rem;
+      line-height: 1.42;
       transform: translateY(15px);
+    }
+    #letter-box p {
+      margin: 0 0 10px 0;
     }
     #letter-box.visible {
       transform: translateY(0);
