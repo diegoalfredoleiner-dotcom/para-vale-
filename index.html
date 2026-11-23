@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Para Vale</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: #000000;
+    color: #ffffff;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+
+  /* Retro Terminal Start Button */
+  #start-btn {
+    background: #000000;
+    color: #ff6b9d;
+    border: 1px solid #ff6b9d;
+    padding: 14px 30px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.1rem;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    z-index: 20;
+  }
+
+  #start-btn:hover {
+    background: #ff6b9d;
+    color: #000000;
+    box-shadow: 0 0 18px rgba(255, 107, 157, 0.7);
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  /* 50/50 Split-Screen Stage */
+  #stage {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    height: 88vh;
+    gap: 32px;
+    z-index: 10;
+  }
+
+  /* Left Half: Flower Container */
+  #left-half {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+
+  /* Right Half: Letter Box Container */
+  #right-half {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+
+  /* ASCII Lily scaled cleanly for the left half */
+  #ascii-lily {
+    font-size: min(1.45vh, 0.85vw);
+    line-height: 1.05;
+    white-space: pre;
+    text-align: center;
+    user-select: none;
+    margin: 0;
+  }
+
+  /* Lily Region Colors */
+  .pot        { color: #d4a373; text-shadow: 0 0 5px rgba(212, 163, 115, 0.3); }
+  .pot-rim    { color: #faedcd; }
+  .stem       { color: #40916c; }
+  .stamen     { color: #ffd166; text-shadow: 0 0 8px rgba(255, 209, 102, 0.8); }
+  .petal-main { color: #ff758f; text-shadow: 0 0 6px rgba(255, 117, 143, 0.4); }
+  .petal-sub  { color: #ffb3c1; text-shadow: 0 0 5px rgba(255, 179, 193, 0.3); }
+  .petal-tip  { color: #fff0f3; }
+
+  /* Letter Box on the Right Half */
+  #letter-box {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: rgba(12, 12, 16, 0.88);
+    border: 1px solid #ff6b9d;
+    box-shadow: 0 0 18px rgba(255, 107, 157, 0.15), inset 0 0 12px rgba(255, 107, 157, 0.05);
+    padding: 24px 26px;
+    color: #ffffff;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    box-sizing: border-box;
+    opacity: 0;
+    transform: translateX(15px);
+    transition: opacity 1s ease, transform 1s ease;
+  }
+
+  #letter-box.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  #letter-box p {
+    margin: 0 0 14px 0;
+  }
+
+  #letter-box p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Special Letter Effects */
+  .intro-glow {
+    color: #ffffff;
+    font-weight: bold;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.9), 0 0 16px rgba(255, 255, 255, 0.6);
+  }
+
+  .soft-glow-word {
+    color: #ffffff;
+    cursor: pointer;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.45);
+    transition: text-shadow 0.3s ease;
+  }
+
+  .soft-glow-word:hover, .soft-glow-word.expanded {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+  }
+
+  .name-pink {
+    color: #ffb3c1;
+    font-weight: bold;
+  }
+
+  /* Anchor for the ASCII hearts beside the first :^) */
+  #heart-anchor {
+    position: relative;
+    display: inline-block;
+  }
+
+  .mini-heart {
+    position: absolute;
+    color: #ff6b9d;
+    font-size: 11px;
+    font-weight: bold;
+    pointer-events: none;
+    user-select: none;
+    animation: floatMiniHeart 2s ease-out forwards;
+  }
+
+  @keyframes floatMiniHeart {
+    0% {
+      opacity: 0;
+      transform: translate(0, 0) scale(0.7);
+    }
+    20% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translate(var(--dx), -28px) scale(1.05);
+    }
+  }
+
+  /* Stack vertically on narrow mobile screens */
+  @media (max-width: 768px) {
+    #stage {
+      flex-direction: column;
+      height: 94vh;
+      gap: 12px;
+    }
+    #left-half, #right-half {
+      flex: none;
+      width: 100%;
+      height: auto;
+    }
+    #ascii-lily {
+      font-size: min(0.85vh, 1.5vw);
+    }
+    #letter-box {
+      padding: 16px 18px;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      max-height: 46vh;
+    }
+    #letter-box p {
+      margin-bottom: 10px;
+    }
+  }
+
+  /* Subtle Background Twinkling Stars */
+  .bg-star {
+    position: fixed;
+    color: #555566;
+    font-size: 10px;
+    pointer-events: none;
+    user-select: none;
+    z-index: 1;
+    animation: twinkle 4s infinite alternate;
+  }
+
+  @keyframes twinkle {
+    0% { opacity: 0.15; }
+    100% { opacity: 0.85; color: #ffffff; }
+  }
+
+  /* Fast Full-Screen Shooting Stars */
+  .shooting-star {
+    position: fixed;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.95) 100%);
+    border-radius: 999px;
+    filter: drop-shadow(0 0 6px #ffffff);
+    pointer-events: none;
+    z-index: 2;
+    animation: shootFast linear forwards;
+  }
+
+  .shooting-star::after {
+    content: '✦';
+    position: absolute;
+    right: -6px;
+    top: -8px;
+    color: #ffffff;
+    font-size: 12px;
+    text-shadow: 0 0 8px #ffffff, 0 0 14px #a2d2ff;
+  }
+
+  @keyframes shootFast {
+    0% {
+      transform: rotate(30deg) translateX(0);
+      opacity: 0;
+    }
+    8% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      transform: rotate(30deg) translateX(140vw);
+      opacity: 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <button id="start-btn">haz click aqui ;^)</button>
+
+  <div id="stage" class="hidden">
+    <!-- LEFT HALF: FLOWERS -->
+    <div id="left-half">
+      <pre id="ascii-lily"></pre>
+    </div>
+
+    <!-- RIGHT HALF: LETTER BOX -->
+    <div id="right-half">
+      <div id="letter-box">
+        <p><span class="intro-glow">queridisima vale:</span></p>
+        <p>como siempre, he estado pensando mucho en ti <span id="heart-anchor">:^)</span></p>
+        <p>decidi hacerte este detallito porque tienes muchisimas de mis cartas en fisico... y se me ocurrio hacerte una con una de las unicas cosas que soy bueno, que es programando :)</p>
+        <p>me tienes <span id="word-muy" class="soft-glow-word">muy</span> loco por ti :^). eres una persona <span id="word-tan" class="soft-glow-word">tan</span> increible...</p>
+        <p>sabes, a veces pienso que si pudiera vivir la vida otra vez, conoceria a <span class="name-pink">Valentina Meraz</span> en todas mis vidas. :^)</p>
+        <p>te quiere, Leiner</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const startBtn = document.getElementById('start-btn');
+    const stage = document.getElementById('stage');
+    const lilyDisplay = document.getElementById('ascii-lily');
+    const letterBox = document.getElementById('letter-box');
+    const heartAnchor = document.getElementById('heart-anchor');
+    const wordMuy = document.getElementById('word-muy');
+    const wordTan = document.getElementById('word-tan');
+
+    // Permanent hover/tap expansion for "muy" and "tan"
+    function setupStretchWord(element, fullText) {
+      let stretched = false;
+      const expand = () => {
+        if (stretched) return;
+        stretched = true;
+        element.classList.add('expanded');
+        
+        // Animate letter-by-letter expansion smoothly
+        let current = element.textContent;
+        let idx = current.length;
+        const interval = setInterval(() => {
+          if (idx <= fullText.length) {
+            element.textContent = fullText.slice(0, idx);
+            idx++;
+          } else {
+            clearInterval(interval);
+          }
+        }, 30);
+      };
+
+      element.addEventListener('mouseenter', expand);
+      element.addEventListener('click', expand); // Also works on mobile tap
+    }
+
+    setupStretchWord(wordMuy, 'muuuuuuuuuy');
+    setupStretchWord(wordTan, 'taaaaaaannnn');
+
+    // Little ASCII hearts beside the first ":^)"
+    function spawnMiniHeart() {
+      const heart = document.createElement('span');
+      heart.classList.add('mini-heart');
+      const symbols = ['<3', '♥', '♡'];
+      heart.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+
+      // Start right beside the :^)
+      const startX = 24 + (Math.random() * 14 - 4);
+      const startY = (Math.random() * 8 - 4);
+      heart.style.left = startX + 'px';
+      heart.style.top = startY + 'px';
+
+      const dx = (Math.random() * 24 - 8) + 'px';
+      heart.style.setProperty('--dx', dx);
+
+      heartAnchor.appendChild(heart);
+
+      setTimeout(() => {
+        heart.remove();
+      }, 2000);
+    }
+
+    const artRows = [
+      "                                                &&&&&                                               ",
+      "                     &&&&&&                &&&&     &&&                                             ",
+      "                 &&&&&&    &&&           &&    &&  &&&&                                             ",
+      "                && &   &&     &&&      &&    &&    &                                                ",
+      "                   &&    &      &&    &&    &     &&                                                ",
+      "                   &&     &&      && &     &      &&    &&&&& &&&                                   ",
+      "                    &      &&      &&     &       &&         &&&&&&&                                ",
+      "                    &      &&& &&& &&    &&       &&          & && &&       &&&                     ",
+      "            &&&&&&& &&      &&  && &    &&        &&          &&&&& &   &&&&  &&&                   ",
+      "       &&&&&        &&&&&&&& && &&&&    &         &&         && &&& &&&&      & &&                  ",
+      "     &&                  &&&& && &&    &&&&       &         &&  &&&&&      &    &&                  ",
+      "    &   $X$$&               && & &&&&  &&&       &&         &  &&&&     &&      &&                  ",
+      "  &&            &&&&&   &&&& &&&& &&&  &&       &&&&&&&&&  &&  &&     && &  &   &                   ",
+      "  & &&&&&            &&&&  &&& &&&&&&  &      &&&       &&&&& &&    && &&  &   &&                   ",
+      "  &&&   &&&             &&&& &&&&&&&&  &  &&&&              &&&   &&& &  &&    &&&&&                ",
+      "          &&&         &&&&&&&&&&&&&&&& &&&    &&&&&&           &&&& &&  &  &  &&    &&&             ",
+      "            &&&               &&&&&&&& &&&&            &&&      && &  &&  &  &&&&&&&&&&&            ",
+      "               &&&&&            && &&&&&&&    &&           &&&    &  &  &&  &&&&&&&&&&&&            ",
+      "              &&&   &&&&&&&&&&&&&&&&&&&&                       && &&&  &   &&           &&&&        ",
+      "             &&          &&     &&&&&&&  &&&&                    & & &&  &&&&&&&&&&&&&     &&&      ",
+      "          &&&       &&&&&&&& &&&   && &&     &&&       &&&&&&&&&& &&&   &&&&&&&&&&&&&&&&&&&   &&    ",
+      "         &&      &&&  &&    &&     &   &       &&&&&&&&&  &&&&&  &&&  &&&&&&&&&&&&&&&&&&&& &&&  &&  ",
+      "        &      &&          &       &   &&       & & &  & &&&& &&   &&&&&&&&&&&&&&&&&&&&&&&&&&&&& && ",
+      "       &    &&             &       &&  &&       &&& &  &&&&&&& &&&&&&&       &&&       &&&&&&&&&& & ",
+      "      &&   &&             &&       &&   &       &&& &   &&&&&&&&&&     &&&     &&&&&&&&&       && & ",
+      "      &   &       &&&&&&&&&&&       &   &       &&& &   &&&      &&&&&&   &&&    &&             &&& ",
+      "      &  &   &&&&&         &&       &&  &       &&& &  &&&    &&&&     &&&  &&&   &&           &&&  ",
+      "      & & &&&               &&       && &&      &&& & &&&  &&&            &&&  &   &&               ",
+      "      &  &&                   &&      &  &     &&&& & &&&&&&                 && &    &&             ",
+      "       &&                      &&      & &     &&&& &&&&&&                     &&&&  &&             ",
+      "                                &&&            & && &&&&                        &&&  &&             ",
+      "                                  &&&     &   && && &&&                          &&&&&              ",
+      "                                    &&&   &   &  &&&&&                           &&&&&              ",
+      "                                      &&&& & &&&&&&&&&&&&&&&&                     &&&               ",
+      "                                    &&   &&&&&   &&&&        &&&                  &&                ",
+      "                                    &&&&&        &&&       &&&&                  &                  ",
+      "                                   &&&   &&&&&&&&&&&&&&&&&    &&&                                   ",
+      "                                 &&&                            &&&                                 ",
+      "                                &&                                &&                                ",
+      "                               &&                                 &&                                ",
+      "                              &&                                   &&                               ",
+      "                              &&                                   &&                               ",
+      "                               &                                   &                                ",
+      "                               &&                                 &&                                ",
+      "                               &&                                 &&                                ",
+      "                                &&                               &&                                 ",
+      "                                &&&                             &&&                                 ",
+      "                                 &&                             &&                                  ",
+      "                                  &&                           &&                                   ",
+      "                                   &&                         &&                                    ",
+      "                                    &&                       &&                                     ",
+      "                                     &&&                    &&                                      ",
+      "                                       &&                 &&&                                       ",
+      "                                       &&& &&&&&&&&&&&&&& &&&                                       ",
+      "                                         &&&&&&&&&&&&&&&&&&                                         "
+    ];
+
+    function colorizeRow(rowText, r) {
+      let html = '';
+      for (let c = 0; c < rowText.length; c++) {
+        const ch = rowText[c];
+        if (ch === ' ') {
+          html += ' ';
+          continue;
+        }
+
+        const safeCh = ch === '&' ? '&amp;' : ch;
+        let cls = 'petal-main';
+
+        if (r >= 36) {
+          cls = (r === 36) ? 'pot-rim' : 'pot';
+        } 
+        else if (r >= 29 && r <= 35 && c >= 40 && c <= 62) {
+          cls = (r >= 33) ? 'pot-rim' : 'stem';
+        }
+        else if (r >= 6 && r <= 15 && c >= 22 && c <= 38 && (ch === '$' || ch === 'X' || (c >= 25 && c <= 36 && r <= 13))) {
+          cls = 'stamen';
+        }
+        else if (c >= 54 && r >= 5 && r <= 34) {
+          cls = 'petal-sub';
+        }
+        else {
+          cls = (ch === '$' || ch === 'X') ? 'petal-tip' : 'petal-main';
+        }
+
+        html += `<span class="${cls}">${safeCh}</span>`;
+      }
+      return html;
+    }
+
+    // Subtle background twinkling stars
+    function createStarfield() {
+      const starChars = ['.', '+', '·'];
+      for (let i = 0; i < 35; i++) {
+        const star = document.createElement('div');
+        star.classList.add('bg-star');
+        star.textContent = starChars[Math.floor(Math.random() * starChars.length)];
+        star.style.left = Math.random() * 100 + 'vw';
+        star.style.top = Math.random() * 100 + 'vh';
+        star.style.animationDelay = (Math.random() * 4) + 's';
+        document.body.appendChild(star);
+      }
+    }
+    createStarfield();
+
+    // Fast Shooting Stars across the ENTIRE viewport
+    function spawnShootingStar() {
+      const star = document.createElement('div');
+      star.classList.add('shooting-star');
+      
+      if (Math.random() > 0.35) {
+        star.style.left = (Math.random() * 120 - 25) + 'vw';
+        star.style.top = '-20px';
+      } else {
+        star.style.left = '-120px';
+        star.style.top = (Math.random() * 75) + 'vh';
+      }
+      
+      const width = Math.random() * 120 + 100;
+      const duration = Math.random() * 0.35 + 0.45;
+      star.style.width = width + 'px';
+      star.style.animationDuration = duration + 's';
+
+      document.body.appendChild(star);
+
+      setTimeout(() => {
+        star.remove();
+      }, duration * 1000 + 100);
+    }
+
+    setInterval(() => {
+      if (Math.random() > 0.45) {
+        spawnShootingStar();
+      }
+    }, 3500);
+
+    startBtn.addEventListener('click', () => {
+      startBtn.classList.add('hidden');
+      stage.classList.remove('hidden');
+
+      spawnShootingStar();
+
+      let currentLines = new Array(artRows.length).fill('');
+      let currentRow = artRows.length - 1;
+
+      const growInterval = setInterval(() => {
+        if (currentRow >= 0) {
+          currentLines[currentRow] = colorizeRow(artRows[currentRow], currentRow);
+          lilyDisplay.innerHTML = currentLines.join('\n');
+          currentRow--;
+        } else {
+          clearInterval(growInterval);
+          letterBox.classList.add('visible');
+          // Start spawning the little ASCII hearts beside the first :^) once the letter appears
+          setInterval(spawnMiniHeart, 750);
+        }
+      }, 42);
+    });
+  </script>
+</body>
+</html>
